@@ -139,7 +139,6 @@ regenerates them from a local copy of the scores.
 
 - [SSL_Anti-spoofing](https://github.com/TakHemlata/SSL_Anti-spoofing) — AASIST-SSL detection backbone
 - [tcm_add](https://github.com/ductuantruong/tcm_add) — ConformerTCM detection backbone
-- [PEFT](https://github.com/huggingface/peft) — LoRA implementation
 - Datasets: ASVspoof 2019 LA, ASVspoof 2021 DF, In-the-Wild, LibriSpeech, VCTK, TIMIT
 - Noise sources: ESC-50, MUSAN, RIR
 
