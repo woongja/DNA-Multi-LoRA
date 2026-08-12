@@ -98,23 +98,23 @@ mkdir -p "$RESULTS_FOLDER"
 
 # Define model configurations
 declare -A AASIST_CONFIGS=(
-    ["g1"]="background_music_noise:${ADAPTER_LOG_ROOT}/train/runs/2025-09-11_02-19-50/checkpoints/epoch_001.ckpt:${LIGHTNING_HYDRA_ROOT}/protocols_icassp/background_music_noise.txt"
-    ["g2"]="auto_tune:${ADAPTER_LOG_ROOT}/train/runs/2025-09-11_02-21-04/checkpoints/epoch_018.ckpt:${LIGHTNING_HYDRA_ROOT}/protocols_icassp/auto_tune.txt"
-    ["g3"]="band_pass_filter:${ADAPTER_LOG_ROOT}/train/runs/2025-09-11_04-04-11/checkpoints/epoch_029.ckpt:${LIGHTNING_HYDRA_ROOT}/protocols_icassp/band_pass_filter.txt"
-    ["g4"]="echo:${ADAPTER_LOG_ROOT}/train/runs/2025-09-11_04-03-13/checkpoints/epoch_028.ckpt:${LIGHTNING_HYDRA_ROOT}/protocols_icassp/echo.txt"
-    ["g5"]="manipulation:${ADAPTER_LOG_ROOT}/train/runs/2025-09-11_04-28-50/checkpoints/epoch_019.ckpt:${LIGHTNING_HYDRA_ROOT}/protocols_icassp/manipulation.txt"
-    ["g6"]="gaussian_noise:${ADAPTER_LOG_ROOT}/train/runs/2025-09-11_04-47-15/checkpoints/epoch_029.ckpt:${LIGHTNING_HYDRA_ROOT}/protocols_icassp/gaussian_noise.txt"
-    ["g7"]="reverberation:${ADAPTER_LOG_ROOT}/train/runs/2025-09-11_05-11-40/checkpoints/epoch_028.ckpt:${LIGHTNING_HYDRA_ROOT}/protocols_icassp/reverberation.txt"
+    ["g1"]="background_music_noise:${ADAPTER_LOG_ROOT}/train/runs/2025-09-11_02-19-50/checkpoints/epoch_001.ckpt:${TRAINING_ROOT}/protocols_icassp/background_music_noise.txt"
+    ["g2"]="auto_tune:${ADAPTER_LOG_ROOT}/train/runs/2025-09-11_02-21-04/checkpoints/epoch_018.ckpt:${TRAINING_ROOT}/protocols_icassp/auto_tune.txt"
+    ["g3"]="band_pass_filter:${ADAPTER_LOG_ROOT}/train/runs/2025-09-11_04-04-11/checkpoints/epoch_029.ckpt:${TRAINING_ROOT}/protocols_icassp/band_pass_filter.txt"
+    ["g4"]="echo:${ADAPTER_LOG_ROOT}/train/runs/2025-09-11_04-03-13/checkpoints/epoch_028.ckpt:${TRAINING_ROOT}/protocols_icassp/echo.txt"
+    ["g5"]="manipulation:${ADAPTER_LOG_ROOT}/train/runs/2025-09-11_04-28-50/checkpoints/epoch_019.ckpt:${TRAINING_ROOT}/protocols_icassp/manipulation.txt"
+    ["g6"]="gaussian_noise:${ADAPTER_LOG_ROOT}/train/runs/2025-09-11_04-47-15/checkpoints/epoch_029.ckpt:${TRAINING_ROOT}/protocols_icassp/gaussian_noise.txt"
+    ["g7"]="reverberation:${ADAPTER_LOG_ROOT}/train/runs/2025-09-11_05-11-40/checkpoints/epoch_028.ckpt:${TRAINING_ROOT}/protocols_icassp/reverberation.txt"
 )
 
 declare -A CONFORMERTCM_CONFIGS=(
-    ["g1"]="background_music_noise:${ADAPTER_LOG_ROOT}/train/runs/2025-09-11_05-38-35/checkpoints/epoch_008.ckpt:${LIGHTNING_HYDRA_ROOT}/protocols_icassp/background_music_noise.txt"
-    ["g2"]="auto_tune:${ADAPTER_LOG_ROOT}/train/runs/2025-09-11_05-38-53/checkpoints/epoch_029.ckpt:${LIGHTNING_HYDRA_ROOT}/protocols_icassp/auto_tune.txt"
-    ["g3"]="band_pass_filter:${ADAPTER_LOG_ROOT}/train/runs/2025-09-11_06-02-37/checkpoints/epoch_011.ckpt:${LIGHTNING_HYDRA_ROOT}/protocols_icassp/band_pass_filter.txt"
-    ["g4"]="echo:${ADAPTER_LOG_ROOT}/train/runs/2025-09-11_06-07-41/checkpoints/epoch_029.ckpt:${LIGHTNING_HYDRA_ROOT}/protocols_icassp/echo.txt"
-    ["g5"]="manipulation:${ADAPTER_LOG_ROOT}/train/runs/2025-09-11_06-29-53/checkpoints/epoch_017.ckpt:${LIGHTNING_HYDRA_ROOT}/protocols_icassp/manipulation.txt"
-    ["g6"]="gaussian_noise:${ADAPTER_LOG_ROOT}/train/runs/2025-09-11_06-36-06/checkpoints/epoch_019.ckpt:${LIGHTNING_HYDRA_ROOT}/protocols_icassp/gaussian_noise.txt"
-    ["g7"]="reverberation:${ADAPTER_LOG_ROOT}/train/runs/2025-09-11_07-05-42/checkpoints/epoch_021.ckpt:${LIGHTNING_HYDRA_ROOT}/protocols_icassp/reverberation.txt"
+    ["g1"]="background_music_noise:${ADAPTER_LOG_ROOT}/train/runs/2025-09-11_05-38-35/checkpoints/epoch_008.ckpt:${TRAINING_ROOT}/protocols_icassp/background_music_noise.txt"
+    ["g2"]="auto_tune:${ADAPTER_LOG_ROOT}/train/runs/2025-09-11_05-38-53/checkpoints/epoch_029.ckpt:${TRAINING_ROOT}/protocols_icassp/auto_tune.txt"
+    ["g3"]="band_pass_filter:${ADAPTER_LOG_ROOT}/train/runs/2025-09-11_06-02-37/checkpoints/epoch_011.ckpt:${TRAINING_ROOT}/protocols_icassp/band_pass_filter.txt"
+    ["g4"]="echo:${ADAPTER_LOG_ROOT}/train/runs/2025-09-11_06-07-41/checkpoints/epoch_029.ckpt:${TRAINING_ROOT}/protocols_icassp/echo.txt"
+    ["g5"]="manipulation:${ADAPTER_LOG_ROOT}/train/runs/2025-09-11_06-29-53/checkpoints/epoch_017.ckpt:${TRAINING_ROOT}/protocols_icassp/manipulation.txt"
+    ["g6"]="gaussian_noise:${ADAPTER_LOG_ROOT}/train/runs/2025-09-11_06-36-06/checkpoints/epoch_019.ckpt:${TRAINING_ROOT}/protocols_icassp/gaussian_noise.txt"
+    ["g7"]="reverberation:${ADAPTER_LOG_ROOT}/train/runs/2025-09-11_07-05-42/checkpoints/epoch_021.ckpt:${TRAINING_ROOT}/protocols_icassp/reverberation.txt"
 )
 
 # Function to run benchmark for a specific model and group
@@ -151,7 +151,7 @@ run_benchmark() {
     
     if [ "$model_name" == "aasist" ]; then
         experiment_config="icassp26/aasist_ssl/xlsr_aasist_single_lora"
-        base_model_path="${LIGHTNING_HYDRA_ROOT}/Best_LA_model_for_DF.pth"
+        base_model_path="${TRAINING_ROOT}/Best_LA_model_for_DF.pth"
         random_start="false"
     elif [ "$model_name" == "conformertcm" ]; then
         experiment_config="icassp26/conformertcm/xlsr_conformertcm_single_lora"

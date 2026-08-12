@@ -60,7 +60,7 @@ def eer(protocol_path, score_path, subset="eval"):
 MODELS = {"aasist": "AASIST-SSL", "conformertcm": "ConformerTCM"}
 
 # Reported in the paper but not recomputable here: the DNA Multi LoRA score
-# files were produced inside the Lightning-hydra training tree and are not part
+# files were produced inside the training harness and are not part
 # of this snapshot. See docs/reproduce.md.
 OURS_OVERALL = {
     "aasist": {"asv19": 4.65, "df21": 10.85, "itw": 8.88, "pooled": 7.93, "params": 26.7},

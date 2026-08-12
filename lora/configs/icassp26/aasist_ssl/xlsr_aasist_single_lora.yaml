@@ -27,7 +27,7 @@ model:
     weight_decay: 0.0001
   net: null
   scheduler: null
-  base_model_path: "${LIGHTNING_HYDRA_ROOT}/Best_LA_model_for_DF.pth"
+  base_model_path: "${TRAINING_ROOT}/Best_LA_model_for_DF.pth"
   cross_entropy_weight: [0.9, 0.1] # amplify bonafide loss
   args:
     adapter:

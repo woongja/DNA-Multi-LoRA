@@ -104,7 +104,7 @@ file with [`noise_classification/compute_accuracy.py`](noise_classification/comp
 |:--|:--|
 | `noise_classification/` | The noise classification module — three-branch CNN-BiLSTM fusion model, dataloaders, feature pre-extraction, training and evaluation entry points |
 | `noise_augmentation/` | The augmentation pipeline that builds the noise-augmented corpora (Table 1): background noise/music, auto-tune, band-pass, echo, pitch shift, time stretch, Gaussian noise, reverberation |
-| `lora/` | Noise-specific LoRA training, the dynamic-routing module, and the ICASSP26 experiment configs, extracted from the [Lightning-hydra](https://github.com/hungdinhxuan/Lightning-hydra) training framework |
+| `lora/` | LoRA configuration — the per-domain adapter configs, dynamic-routing configs, and the run scripts for every ICASSP26 experiment |
 | `detection/` | Our modifications to the two detection backbones, as applyable patches plus the changed files |
 | `protocols/` | Protocol construction for the augmented corpora |
 | `results/` | EER computation, generated tables, figures, and analysis notebooks |
@@ -139,7 +139,7 @@ regenerates them from a local copy of the scores.
 
 - [SSL_Anti-spoofing](https://github.com/TakHemlata/SSL_Anti-spoofing) — AASIST-SSL detection backbone
 - [tcm_add](https://github.com/ductuantruong/tcm_add) — ConformerTCM detection backbone
-- [Lightning-hydra](https://github.com/hungdinhxuan/Lightning-hydra) — LoRA training framework
+- [PEFT](https://github.com/huggingface/peft) — LoRA implementation
 - Datasets: ASVspoof 2019 LA, ASVspoof 2021 DF, In-the-Wild, LibriSpeech, VCTK, TIMIT
 - Noise sources: ESC-50, MUSAN, RIR
 

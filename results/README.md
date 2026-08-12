@@ -20,7 +20,7 @@ python results/compute_eer.py --protocols <protocol_root> --scores <score_root> 
 
 Everything except the DNA Multi LoRA rows is recomputed from raw scores and matches the
 published values exactly. The DNA Multi LoRA scores were produced inside the
-Lightning-hydra training tree and are not part of this snapshot, so those rows are quoted
+training harness and are not part of this snapshot, so those rows are quoted
 from the paper and marked as such in the table headers and in `compute_eer.py`.
 
 Two details worth knowing when reading `table2_overall`:

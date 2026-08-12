@@ -15,5 +15,5 @@ CUDA_DEVICE=${CUDA_DEVICE:-3}
 CUDA_VISIBLE_DEVICES=$CUDA_DEVICE OMP_NUM_THREADS=1 python src/train.py \
     experiment=icassp26/aasist_ssl/xlsr_aasist_single_lora \
     ++model.is_base_model_path_ln=false \
-    ++data.args.protocol_path="${LIGHTNING_HYDRA_ROOT}/protocols_icassp/gaussian_noise.txt" \
+    ++data.args.protocol_path="${TRAINING_ROOT}/protocols_icassp/gaussian_noise.txt" \
     logger=wandb

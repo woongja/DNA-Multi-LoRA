@@ -101,16 +101,15 @@ script pre-processes automatically if `$PREPROCESSED_DIR` does not exist yet.
 
 ## 3. Train the noise-specific LoRA adapters
 
-Adapter training runs inside the
-[Lightning-hydra](https://github.com/hungdinhxuan/Lightning-hydra) framework. Clone it,
-copy `lora/src/**` over the matching paths, drop `lora/configs/icassp26` into
-`configs/experiment/`, and fill in `lora/.env.example` as `.env` (dataset roots, backbone
-checkpoints, output directory — **never commit the filled-in file**).
+Adapter training runs in a PyTorch Lightning + Hydra harness. Copy `lora/src/**` over the
+matching paths, drop `lora/configs/icassp26` into `configs/experiment/`, and fill in
+`lora/.env.example` as `.env` (dataset roots, backbone checkpoints, output directory —
+**never commit the filled-in file**).
 
 One adapter per domain, rank 8, trained on ASV19\* while the backbone stays frozen:
 
 ```bash
-# from the Lightning-hydra root
+# from the training harness root
 bash scripts/icassp26/aasist_ssl_g1.sh        # D1 background music/noise
 bash scripts/icassp26/aasist_ssl_g2.sh        # D2 auto-tune
 ...                                           # g3 … g7
@@ -161,7 +160,7 @@ python results/compute_eer.py \
 
 This regenerates `table2_overall`, `table4_per_domain`, and `fig2_sequential_ft` as both
 CSV and Markdown. The `dna_multi_lora` rows are quoted from the paper — those score files
-were produced inside the Lightning-hydra tree and are not part of this snapshot; every
+were produced inside the training harness and are not part of this snapshot; every
 other number is computed from the raw scores.
 
 `results/notebooks/` holds the analysis behind the figures: `evaluation_eer.ipynb`

@@ -39,9 +39,9 @@ model:
       #init_lora_weights: "gaussian"
   adapter_type: lora
 
-  adapter_paths: "${PROJECT_ROOT}/Lightning-hydra/aasist_ssl_noise_lora_adapters/epoch_001.ckpt,${ADAPTER_LOG_ROOT}/train/runs/2025-09-11_02-21-04/checkpoints/epoch_018.ckpt,${ADAPTER_LOG_ROOT}/train/runs/2025-09-11_04-04-11/checkpoints/epoch_029.ckpt,${ADAPTER_LOG_ROOT}/train/runs/2025-09-11_04-03-13/checkpoints/epoch_028.ckpt,${ADAPTER_LOG_ROOT}/train/runs/2025-09-11_04-28-50/checkpoints/epoch_019.ckpt,${ADAPTER_LOG_ROOT}/train/runs/2025-09-11_04-47-15/checkpoints/epoch_029.ckpt,${ADAPTER_LOG_ROOT}/train/runs/2025-09-11_05-11-40/checkpoints/epoch_028.ckpt"
+  adapter_paths: "${ADAPTER_ROOT}/aasist_ssl_noise_lora_adapters/epoch_001.ckpt,${ADAPTER_LOG_ROOT}/train/runs/2025-09-11_02-21-04/checkpoints/epoch_018.ckpt,${ADAPTER_LOG_ROOT}/train/runs/2025-09-11_04-04-11/checkpoints/epoch_029.ckpt,${ADAPTER_LOG_ROOT}/train/runs/2025-09-11_04-03-13/checkpoints/epoch_028.ckpt,${ADAPTER_LOG_ROOT}/train/runs/2025-09-11_04-28-50/checkpoints/epoch_019.ckpt,${ADAPTER_LOG_ROOT}/train/runs/2025-09-11_04-47-15/checkpoints/epoch_029.ckpt,${ADAPTER_LOG_ROOT}/train/runs/2025-09-11_05-11-40/checkpoints/epoch_028.ckpt"
   adapter_names: "g1,g2,g3,g4,g5,g6,g7"
-  noise_model_path: "${LIGHTNING_HYDRA_ROOT}/best_model_interspeech_6.pth"
+  noise_model_path: "${TRAINING_ROOT}/best_model_interspeech_6.pth"
   
 data:
   batch_size: 1
