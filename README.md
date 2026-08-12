@@ -146,19 +146,12 @@ regenerates them from a local copy of the scores.
 ## Citation
 
 ```bibtex
-@inproceedings{lee2026dna,
-  title     = {Dynamic Noise-Aware Multi LoRA Framework Towards Real-World Audio Deepfake Detection},
-  author    = {Lee, Woongjae and Dinh-Xuan, Hung and Doan, Thien-Phuc and Jung, Souhwan},
-  booktitle = {ICASSP 2026 - 2026 IEEE International Conference on Acoustics, Speech and Signal Processing (ICASSP)},
-  pages     = {16257--16261},
-  year      = {2026},
-  doi       = {10.1109/ICASSP55912.2026.11463424}
+@inproceedings{lee2026dynamic,
+  title={Dynamic Noise-Aware Multi Lora Framework Towards Real-World Audio Deepfake Detection},
+  author={Lee, Woongjae and Dinh-Xuan, Hung and Doan, Thien-Phuc and Jung, Souhwan},
+  booktitle={ICASSP 2026-2026 IEEE International Conference on Acoustics, Speech and Signal Processing (ICASSP)},
+  pages={16257--16261},
+  year={2026},
+  organization={IEEE}
 }
 ```
-
-## Acknowledgements
-
-Supported by the Cyber Investigation Support Technology Development Program
-(No. RS-2025-02304983) of the Korea Institute of Police Technology (KIPoT), funded by the
-Korean National Police Agency, and by the IITP-ITRC program
-(IITP-202-RS-2020-II201602) funded by the Korean Ministry of Science and ICT.
