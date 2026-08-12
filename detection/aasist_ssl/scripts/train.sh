@@ -1,0 +1,10 @@
+CUDA_VISIBLE_DEVICES=1 python main_SSL_DF.py \
+      --track=DF \
+      --lr=0.000001 \
+      --batch_size=14 \
+      --loss=WCE \
+      --model_path='/SSL_Anti-spoofing/Best_LA_model_for_DF.pth' \
+      --database_path='Dataset/icassp/asv19' \
+      --protocols_path='protocols/protocol_asv19_aug.txt' \
+      --num_epochs=30 \
+      --early_stop_patience=5

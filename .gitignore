@@ -1,0 +1,30 @@
+# secrets — never commit a filled-in environment file
+.env
+*.env
+!.env.example
+
+# model weights and adapters
+*.pth
+*.pt
+*.ckpt
+*.safetensors
+*.zip
+
+# raw evaluation scores and preprocessed features
+*.npy
+*.h5
+out/
+runs/
+logs/
+
+# audio
+*.wav
+*.flac
+
+# python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.ipynb_checkpoints/
+.DS_Store

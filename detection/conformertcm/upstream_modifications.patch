@@ -1,0 +1,364 @@
+diff --git a/data_utils.py b/data_utils.py
+index 70c0084..5fa602d 100644
+--- a/data_utils.py
++++ b/data_utils.py
+@@ -17,9 +17,9 @@ class Dataset_train(Dataset):
+         return len(self.list_IDs)
+     def __getitem__(self, index):
+         utt_id = self.list_IDs[index]
+-        X, fs = librosa.load(self.base_dir+'flac/'+utt_id+'.flac', sr=16000)
+-        Y=process_Rawboost_feature(X, fs, self.args, self.algo)
+-        X_pad= pad(Y, self.cut)
++        X, fs = librosa.load(self.base_dir+'/'+utt_id, sr=16000)
++        # Y=process_Rawboost_feature(X, fs, self.args, self.algo)
++        X_pad= pad(X, self.cut)
+         x_inp= Tensor(X_pad)
+         target = self.labels[utt_id]
+         return x_inp, target
+@@ -35,7 +35,7 @@ class Dataset_eval(Dataset):
+         return len(self.list_IDs)
+     def __getitem__(self, index):  
+         utt_id = self.list_IDs[index]
+-        X, fs = librosa.load(self.base_dir+'flac/'+utt_id+'.flac', sr=16000)
++        X, fs = librosa.load(self.base_dir+'/'+utt_id, sr=16000)
+         X_pad = pad(X,self.cut)
+         x_inp = Tensor(X_pad)
+         return x_inp, utt_id  
+diff --git a/main.py b/main.py
+index e15b7bb..fb2bd33 100644
+--- a/main.py
++++ b/main.py
+@@ -11,29 +11,29 @@ from utils import read_metadata
+ import numpy as np
+ from tqdm import tqdm
+ 
+-def evaluate_accuracy(dev_loader, model, device):
++def evaluate_accuracy(dev_loader, model, device, epoch=0):
+     val_loss = 0.0
+     num_total = 0.0
+-    correct=0
++    correct = 0
+     model.eval()
+     weight = torch.FloatTensor([0.1, 0.9]).to(device)
+     criterion = nn.CrossEntropyLoss(weight=weight)
+-    num_batch = len(dev_loader)
+-    i=0
++
+     with torch.no_grad():
+-      for batch_x, batch_y in dev_loader:
+-        batch_size = batch_x.size(0)
+-        target = torch.LongTensor(batch_y).to(device)
+-        num_total += batch_size
+-        batch_x = batch_x.to(device)
+-        batch_y = batch_y.view(-1).type(torch.int64).to(device)
+-        batch_out, _ = model(batch_x)
+-        pred = batch_out.max(1)[1] 
+-        correct += pred.eq(target).sum().item()
+-        
+-        batch_loss = criterion(batch_out, batch_y)
+-        val_loss += (batch_loss.item() * batch_size)
+-        i=i+1
++        for batch_x, batch_y in tqdm(dev_loader, desc=f"Eval Epoch {epoch}", leave=False):
++            batch_size = batch_x.size(0)
++            target = torch.LongTensor(batch_y).to(device)
++            num_total += batch_size
++            batch_x = batch_x.to(device)
++            batch_y = batch_y.view(-1).type(torch.int64).to(device)
++
++            batch_out, _ = model(batch_x)
++            pred = batch_out.max(1)[1]
++            correct += pred.eq(target).sum().item()
++
++            batch_loss = criterion(batch_out, batch_y)
++            val_loss += (batch_loss.item() * batch_size)
++
+     val_loss /= num_total
+     test_accuracy = 100. * correct / len(dev_loader.dataset)
+     print('\n{} - {} - {} '.format(epoch, str(test_accuracy)+'%', val_loss))
+@@ -46,27 +46,28 @@ def produce_evaluation_file(dataset, model, device, save_path):
+     fname_list = []
+     score_list = []
+     text_list = []
++    
++    with torch.no_grad():
++        for batch_x,utt_id in tqdm(data_loader, desc="Evaluating", unit="batch"):
++            batch_x = batch_x.to(device)
++            batch_out, _ = model(batch_x)
++            batch_score = (batch_out[:, 1]
++                        ).data.cpu().numpy().ravel()
++            # add outputs
++            fname_list.extend(utt_id)
++            score_list.extend(batch_score.tolist())
+ 
+-    for batch_x,utt_id in data_loader:
+-        batch_x = batch_x.to(device)
+-        batch_out, _ = model(batch_x)
+-        batch_score = (batch_out[:, 1]
+-                       ).data.cpu().numpy().ravel()
+-        # add outputs
+-        fname_list.extend(utt_id)
+-        score_list.extend(batch_score.tolist())
+-
+-    for f, cm in zip(fname_list, score_list):
+-        text_list.append('{} {}'.format(f, cm))
+-    del fname_list
+-    del score_list
+-    with open(save_path, 'a+') as fh:
+-        for i in range(0, len(text_list), 500):
+-            batch = text_list[i:i+500]
+-            fh.write('\n'.join(batch) + '\n')
+-    del text_list
+-    fh.close()
+-    print('Scores saved to {}'.format(save_path))
++        for f, cm in zip(fname_list, score_list):
++            text_list.append('{} {}'.format(f, cm))
++        del fname_list
++        del score_list
++        with open(save_path, 'a+') as fh:
++            for i in range(0, len(text_list), 500):
++                batch = text_list[i:i+500]
++                fh.write('\n'.join(batch) + '\n')
++        del text_list
++        fh.close()
++        print('Scores saved to {}'.format(save_path))
+ 
+ def train_epoch(train_loader, model, lr,optim, device):
+     num_total = 0.0
+@@ -124,6 +125,7 @@ if __name__ == '__main__':
+     parser.add_argument('--lr', type=float, default=0.000001)
+     parser.add_argument('--weight_decay', type=float, default=0.0001)
+     parser.add_argument('--loss', type=str, default='WCE')
++    parser.add_argument('--model_name', type=str, default='best_model.pth', help='Name of the saved model file')
+ 
+     #model parameters
+     parser.add_argument('--emb-size', type=int, default=144, metavar='N',
+@@ -144,10 +146,15 @@ if __name__ == '__main__':
+                         help='Comment to describe the saved model')
+     parser.add_argument('--comment_eval', type=str, default=None,
+                         help='Comment to describe the saved scores')
++    parser.add_argument('--early_stop_patience', type=int, default=3,
++                        help='Early stopping patience (default: 3)')
++    parser.add_argument('--model_path', type=str,
++                        default=None, help='Model checkpoint')
+     
+     #Train
+     parser.add_argument('--train', default=True, type=lambda x: (str(x).lower() in ['true', 'yes', '1']),
+                     help='Whether to train the model')
++    parser.add_argument('--ckpt_path', type=str, default=None, help='Path to model checkpoint for resuming training or evaluation')
+     #Eval
+     parser.add_argument('--n_mejores_loss', type=int, default=5, help='save the n-best models')
+     parser.add_argument('--average_model', default=True, type=lambda x: (str(x).lower() in ['true', 'yes', '1']),
+@@ -185,6 +192,7 @@ if __name__ == '__main__':
+                     help=' maximum gain difference between linear and non-linear components.[default=20]')
+     parser.add_argument('--N_f', type=int, default=5, 
+                     help='order of the (non-)linearity where N_f=1 refers only to linear components.[default=5]')
++    parser.add_argument('--eval_output', type=str, default=None, help='Path to save the evaluation result')
+ 
+     # ISD_additive_noise parameters
+     parser.add_argument('--P', type=int, default=10, 
+@@ -226,7 +234,7 @@ if __name__ == '__main__':
+         track, args.loss, args.lr,args.emb_size, args.heads, args.num_encoders, args.kernel_size, args.algo)
+     if args.comment:
+         model_tag = model_tag + '_{}'.format(args.comment)
+-    model_save_path = os.path.join('models', model_tag)
++    model_save_path = os.path.join('models/FT-seperate')
+     
+     print('Model tag: '+ model_tag)
+ 
+@@ -242,32 +250,42 @@ if __name__ == '__main__':
+     print('Device: {}'.format(device))
+     
+     model = Model(args,device)
+-    if not args.FT_W2V:
+-        for param in model.ssl_model.parameters():
+-            param.requires_grad = False
++    # model.load_state_dict(torch.load(args.ckpt_path))
++    model.load_state_dict(torch.load(args.model_path))
+     nb_params = sum([param.view(-1).size()[0] for param in model.parameters() if param.requires_grad])
+     model =model.to(device)
+     print('nb_params:',nb_params)
+ 
++    
++    print('######## Eval ########')
++    model.load_state_dict(torch.load(os.path.join(args.model_path)))
++    print('Model loaded : {}'.format(os.path.join(args.model_path)))
++
++    file_eval = read_metadata( dir_meta =  os.path.join(args.protocols_path), is_eval=True, is_train=False)
++    print('no. of eval trials',len(file_eval))
++    eval_set=Dataset_eval(list_IDs = file_eval,base_dir = os.path.join(args.database_path),track='LA')
++    produce_evaluation_file(eval_set, model, device, args.eval_output)
++    sys.exit()
++    
+     #set Adam optimizer
+     optimizer = torch.optim.Adam(model.parameters(), lr=args.lr,weight_decay=args.weight_decay)
+      
+     # define train dataloader
+-    label_trn, files_id_train = read_metadata( dir_meta =  os.path.join(args.protocols_path+'LA/{}_cm_protocols/{}.cm.train.trn.txt'.format(prefix,prefix_2019)), is_eval=False)
++    label_trn, files_id_train = read_metadata( dir_meta =  os.path.join(args.protocols_path), is_eval=False, is_train=True)
+     print('no. of training trials',len(files_id_train))
+     
+-    train_set=Dataset_train(args,list_IDs = files_id_train,labels = label_trn,base_dir = os.path.join(args.database_path+'LA/{}_{}_train/'.format(prefix_2019.split('.')[0],args.track)),algo=args.algo)
++    train_set=Dataset_train(args,list_IDs = files_id_train,labels = label_trn,base_dir = os.path.join(args.database_path),algo=args.algo)
+     train_loader = DataLoader(train_set, batch_size=args.batch_size, num_workers = 10, shuffle=True,drop_last = True)
+     
+     del train_set, label_trn
+     
+     # define validation dataloader
+-    labels_dev, files_id_dev = read_metadata( dir_meta =  os.path.join(args.protocols_path+'LA/{}_cm_protocols/{}.cm.dev.trl.txt'.format(prefix,prefix_2019)), is_eval=False)
++    labels_dev, files_id_dev = read_metadata( dir_meta =  os.path.join(args.protocols_path), is_eval=False, is_train=False)
+     print('no. of validation trials',len(files_id_dev))
+ 
+     dev_set = Dataset_train(args,list_IDs = files_id_dev,
+ 		    labels = labels_dev,
+-		    base_dir = os.path.join(args.database_path+'LA/{}_{}_dev/'.format(prefix_2019.split('.')[0],args.track)), algo=args.algo)
++		    base_dir = os.path.join(args.database_path), algo=args.algo)
+ 
+     dev_loader = DataLoader(dev_set, batch_size=8, num_workers=10, shuffle=False)
+     del dev_set,labels_dev
+@@ -275,24 +293,31 @@ if __name__ == '__main__':
+     
+     ##################### Training and validation #####################
+     num_epochs = args.num_epochs
+-    not_improving=0
+     epoch=0
+     bests=np.ones(n_mejores,dtype=float)*float('inf')
+     best_loss=float('inf')
++    
++    # Early stopping variables
++    patience_counter = 0
++    patience = args.early_stop_patience
++    
+     if args.train:
+         for i in range(n_mejores):
+             np.savetxt( os.path.join(best_save_path, 'best_{}.pth'.format(i)), np.array((0,0)))
+-        while not_improving<args.num_epochs:
++        while patience_counter < patience:
+             print('######## Epoca {} ########'.format(epoch))
+             train_epoch(train_loader, model, args.lr, optimizer, device)
+             val_loss = evaluate_accuracy(dev_loader, model, device)
+-            if val_loss<best_loss:
+-                best_loss=val_loss
+-                torch.save(model.state_dict(), os.path.join(model_save_path, 'best.pth'))
+-                print('New best epoch')
+-                not_improving=0
++            
++            # Early stopping check and save only improved models
++            if val_loss < best_loss:
++                best_loss = val_loss
++                patience_counter = 0
++                torch.save(model.state_dict(), os.path.join(model_save_path, args.model_name))
++                print('New best validation loss: {:.6f} - Model saved!'.format(best_loss))
+             else:
+-                not_improving+=1
++                patience_counter += 1
++                print('No improvement. Patience: {}/{}'.format(patience_counter, patience))
+             for i in range(n_mejores):
+                 if bests[i]>val_loss:
+                     for t in range(n_mejores-1,i,-1):
+@@ -307,43 +332,10 @@ if __name__ == '__main__':
+             epoch+=1
+             if epoch>74:
+                 break
++            # Early stopping
++            if patience_counter >= patience:
++                print('Early stopping triggered after {} epochs without improvement'.format(patience))
++                print('Best validation loss: {:.6f}'.format(best_loss))
++                break
+         print('Total epochs: ' + str(epoch) +'\n')
+ 
+-
+-    print('######## Eval ########')
+-    if args.average_model:
+-        sdl=[]
+-        model.load_state_dict(torch.load(os.path.join(best_save_path, 'best_{}.pth'.format(0))))
+-        print('Model loaded : {}'.format(os.path.join(best_save_path, 'best_{}.pth'.format(0))))
+-        sd = model.state_dict()
+-        for i in range(1,args.n_average_model):
+-            model.load_state_dict(torch.load(os.path.join(best_save_path, 'best_{}.pth'.format(i))))
+-            print('Model loaded : {}'.format(os.path.join(best_save_path, 'best_{}.pth'.format(i))))
+-            sd2 = model.state_dict()
+-            for key in sd:
+-                sd[key]=(sd[key]+sd2[key])
+-        for key in sd:
+-            sd[key]=(sd[key])/args.n_average_model
+-        model.load_state_dict(sd)
+-        torch.save(model.state_dict(), os.path.join(best_save_path, 'avg_5_best_{}.pth'.format(i)))
+-        print('Model loaded average of {} best models in {}'.format(args.n_average_model, best_save_path))
+-    else:
+-        model.load_state_dict(torch.load(os.path.join(model_save_path, 'best.pth')))
+-        print('Model loaded : {}'.format(os.path.join(model_save_path, 'best.pth')))
+-
+-    eval_tracks=['LA', 'DF']
+-    if args.comment_eval:
+-        model_tag = model_tag + '_{}'.format(args.comment_eval)
+-
+-    for tracks in eval_tracks:
+-        if not os.path.exists('Scores/{}/{}.txt'.format(tracks, model_tag)):
+-            prefix      = 'ASVspoof_{}'.format(tracks)
+-            prefix_2019 = 'ASVspoof2019.{}'.format(tracks)
+-            prefix_2021 = 'ASVspoof2021.{}'.format(tracks)
+-
+-            file_eval = read_metadata( dir_meta =  os.path.join(args.protocols_path+'{}/{}_cm_protocols/{}.cm.eval.trl.txt'.format(tracks, prefix,prefix_2021)), is_eval=True)
+-            print('no. of eval trials',len(file_eval))
+-            eval_set=Dataset_eval(list_IDs = file_eval,base_dir = os.path.join(args.database_path+'{}/ASVspoof2021_{}_eval/'.format(tracks,tracks)),track=tracks)
+-            produce_evaluation_file(eval_set, model, device, 'Scores/{}/{}.txt'.format(tracks, model_tag))
+-        else:
+-            print('Score file already exists')
+diff --git a/model.py b/model.py
+index b3796dd..64671e8 100644
+--- a/model.py
++++ b/model.py
+@@ -41,7 +41,7 @@ class MyConformer(nn.Module):
+ class SSLModel(nn.Module): #W2V
+     def __init__(self,device):
+         super(SSLModel, self).__init__()
+-        cp_path = 'xlsr2_300m.pt'   # Change the pre-trained XLSR model path. 
++        cp_path = '${PROJECT_ROOT}/xlsr2_300m.pt'   # Change the pre-trained XLSR model path. 
+         model, cfg, task = fairseq.checkpoint_utils.load_model_ensemble_and_task([cp_path])
+         self.model = model[0]
+         self.device=device
+diff --git a/utils.py b/utils.py
+index 298a437..e1136d3 100644
+--- a/utils.py
++++ b/utils.py
+@@ -13,23 +13,32 @@ def pad(x, max_len):
+     padded_x = np.tile(x, (1, num_repeats))[:, :max_len][0]
+     return padded_x	
+ 
+-def read_metadata(dir_meta, is_eval=False):
++def read_metadata(dir_meta, is_train=False,is_eval=False):
+     d_meta = {}
+     file_list=[]
+     with open(dir_meta, 'r') as f:
+          l_meta = f.readlines()
+     
+-    if (is_eval):
++    if (is_train):
+         for line in l_meta:
+-            key= line.strip()
+-            file_list.append(key)
++             key, subset, label  = line.strip().split()
++             if subset == 'train':
++                file_list.append(key)
++                d_meta[key] = 1 if label == 'bonafide' else 0
++        return d_meta, file_list
++    
++    elif(is_eval):
++        for line in l_meta:
++            key, subset, label  = line.strip().split()
++            if subset == 'eval':  
++                file_list.append(key)
+         return file_list
+     else:
+         for line in l_meta:
+-             _,key,_,_,label = line.strip().split()
+-             
+-             file_list.append(key)
+-             d_meta[key] = 1 if label == 'bonafide' else 0
++             key, subset, label  = line.strip().split()
++             if subset == 'dev':
++                file_list.append(key)
++                d_meta[key] = 1 if label == 'bonafide' else 0
+         return d_meta,file_list
+     
+ def reproducibility(random_seed, args=None):                                  

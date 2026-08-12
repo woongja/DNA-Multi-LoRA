@@ -1,0 +1,313 @@
+diff --git a/data_utils_SSL.py b/data_utils_SSL.py
+index b45600a..971572f 100644
+--- a/data_utils_SSL.py
++++ b/data_utils_SSL.py
+@@ -14,7 +14,7 @@ ___author__ = "Hemlata Tak"
+ __email__ = "tak@eurecom.fr"
+ 
+ 
+-def genSpoof_list( dir_meta,is_train=False,is_eval=False):
++def genSpoof_list(dir_meta,is_train=False,is_eval=False):
+     
+     d_meta = {}
+     file_list=[]
+@@ -23,23 +23,24 @@ def genSpoof_list( dir_meta,is_train=False,is_eval=False):
+ 
+     if (is_train):
+         for line in l_meta:
+-             _,key,_,_,label = line.strip().split()
+-             
+-             file_list.append(key)
+-             d_meta[key] = 1 if label == 'bonafide' else 0
+-        return d_meta,file_list
++             key, subset, label  = line.strip().split()
++             if subset == 'train':
++                file_list.append(key)
++                d_meta[key] = 1 if label == 'bonafide' else 0
++        return d_meta, file_list
+     
+     elif(is_eval):
+         for line in l_meta:
+-            key= line.strip()
+-            file_list.append(key)
++            key, subset, label  = line.strip().split()
++            if subset == 'eval':
++                file_list.append(key)
+         return file_list
+     else:
+         for line in l_meta:
+-             _,key,_,_,label = line.strip().split()
+-             
+-             file_list.append(key)
+-             d_meta[key] = 1 if label == 'bonafide' else 0
++             key, subset, label  = line.strip().split()
++             if subset == 'dev':
++                file_list.append(key)
++                d_meta[key] = 1 if label == 'bonafide' else 0
+         return d_meta,file_list
+ 
+ 
+@@ -73,9 +74,9 @@ class Dataset_ASVspoof2019_train(Dataset):
+ 	def __getitem__(self, index):
+             
+             utt_id = self.list_IDs[index]
+-            X,fs = librosa.load(self.base_dir+'flac/'+utt_id+'.flac', sr=16000) 
+-            Y=process_Rawboost_feature(X,fs,self.args,self.algo)
+-            X_pad= pad(Y,self.cut)
++            X,fs = librosa.load(self.base_dir +'/' +  utt_id, sr=16000) 
++            # Y=process_Rawboost_feature(X,fs,self.args,self.algo)
++            X_pad= pad(X,self.cut)
+             x_inp= Tensor(X_pad)
+             target = self.labels[utt_id]
+             
+@@ -98,7 +99,7 @@ class Dataset_ASVspoof2021_eval(Dataset):
+ 	def __getitem__(self, index):
+             
+             utt_id = self.list_IDs[index]
+-            X, fs = librosa.load(self.base_dir+'flac/'+utt_id+'.flac', sr=16000)
++            X, fs = librosa.load(self.base_dir +'/'+  utt_id, sr=16000) 
+             X_pad = pad(X,self.cut)
+             x_inp = Tensor(X_pad)
+             return x_inp,utt_id  
+diff --git a/main_SSL_DF.py b/main_SSL_DF.py
+index 712e2c5..00f3fc0 100644
+--- a/main_SSL_DF.py
++++ b/main_SSL_DF.py
+@@ -11,7 +11,7 @@ from data_utils_SSL import genSpoof_list,Dataset_ASVspoof2019_train,Dataset_ASVs
+ from model import Model
+ from tensorboardX import SummaryWriter
+ from core_scripts.startup_config import set_random_seed
+-
++import tqdm as tqdm
+ 
+ __author__ = "Hemlata Tak"
+ __email__ = "tak@eurecom.fr"
+@@ -24,50 +24,68 @@ def evaluate_accuracy(dev_loader, model, device):
+     model.eval()
+     weight = torch.FloatTensor([0.1, 0.9]).to(device)
+     criterion = nn.CrossEntropyLoss(weight=weight)
+-    for batch_x, batch_y in dev_loader:
+-        
+-        batch_size = batch_x.size(0)
+-        num_total += batch_size
+-        batch_x = batch_x.to(device)
+-        batch_y = batch_y.view(-1).type(torch.int64).to(device)
+-        batch_out = model(batch_x)
+-        
+-        batch_loss = criterion(batch_out, batch_y)
+-        val_loss += (batch_loss.item() * batch_size)
+-        
+-    val_loss /= num_total
++    with torch.no_grad():
++        for batch_x, batch_y in tqdm.tqdm(dev_loader, desc="Validation", leave=False):
++            
++            batch_size = batch_x.size(0)
++            num_total += batch_size
++            batch_x = batch_x.to(device)
++            batch_y = batch_y.view(-1).type(torch.int64).to(device)
++            batch_out = model(batch_x)
++            
++            batch_loss = criterion(batch_out, batch_y)
++            val_loss += (batch_loss.item() * batch_size)
++            
++        val_loss /= num_total
+    
+     return val_loss
+ 
+ 
++# def produce_evaluation_file(dataset, model, device, save_path):
++#     data_loader = DataLoader(dataset, batch_size=14, shuffle=False, drop_last=False)
++#     model.eval()
++    
++#     fname_list = []
++#     score_list = []
++    
++#     for batch_x,utt_id in tqdm.tqdm(data_loader, desc="Evaluation", leave=False):
++#         fname_list = []
++#         score_list = []  
++#         batch_size = batch_x.size(0)
++#         batch_x = batch_x.to(device)
++        
++#         batch_out = model(batch_x)
++        
++#         batch_score = (batch_out[:, 1]  
++#                        ).data.cpu().numpy().ravel() 
++#         # add outputs
++#         fname_list.extend(utt_id)
++#         score_list.extend(batch_score.tolist())
++        
++#         with open(save_path, 'a+') as fh:
++#             for f, cm in zip(fname_list,score_list):
++#                 fh.write('{} {}\n'.format(f, cm))
++#         fh.close()   
++#     print('Scores saved to {}'.format(save_path))
++
+ def produce_evaluation_file(dataset, model, device, save_path):
+-    data_loader = DataLoader(dataset, batch_size=14, shuffle=False, drop_last=False)
+-    num_correct = 0.0
+-    num_total = 0.0
++    data_loader = DataLoader(dataset, batch_size=64, shuffle=False, drop_last=False)
+     model.eval()
+     
+     fname_list = []
+-    key_list = []
+     score_list = []
+     
+-    for batch_x,utt_id in data_loader:
+-        fname_list = []
+-        score_list = []  
+-        batch_size = batch_x.size(0)
+-        batch_x = batch_x.to(device)
+-        
+-        batch_out = model(batch_x)
+-        
+-        batch_score = (batch_out[:, 1]  
+-                       ).data.cpu().numpy().ravel() 
+-        # add outputs
+-        fname_list.extend(utt_id)
+-        score_list.extend(batch_score.tolist())
+-        
+-        with open(save_path, 'a+') as fh:
+-            for f, cm in zip(fname_list,score_list):
+-                fh.write('{} {}\n'.format(f, cm))
+-        fh.close()   
++    with torch.no_grad():
++        for batch_x,utt_id in tqdm.tqdm(data_loader, desc="Evaluation", leave=False):
++            batch_size = batch_x.size(0)
++            batch_x = batch_x.to(device)
++            batch_out = model(batch_x)
++            fname_list = list(utt_id)
++            score_list = batch_out.data.cpu().numpy().tolist()
++            with open(save_path, 'a+') as fh:
++                for f, cm in zip(fname_list, score_list):
++                    fh.write('{} {} {}\n'.format(f, cm[0], cm[1]))
++                    
+     print('Scores saved to {}'.format(save_path))
+ 
+ def train_epoch(train_loader, model, lr,optim, device):
+@@ -81,7 +99,7 @@ def train_epoch(train_loader, model, lr,optim, device):
+     weight = torch.FloatTensor([0.1, 0.9]).to(device)
+     criterion = nn.CrossEntropyLoss(weight=weight)
+     
+-    for batch_x, batch_y in train_loader:
++    for batch_x, batch_y in tqdm.tqdm(train_loader, desc="Training"):
+        
+         batch_size = batch_x.size(0)
+         num_total += batch_size
+@@ -139,8 +157,12 @@ if __name__ == '__main__':
+     
+     parser.add_argument('--model_path', type=str,
+                         default=None, help='Model checkpoint')
++    parser.add_argument('--model_name', type=str, default='best_model.pth',
++                        help='Name of the saved model file')
+     parser.add_argument('--comment', type=str, default=None,
+                         help='Comment to describe the saved model')
++    parser.add_argument('--early_stop_patience', type=int, default=5,
++                        help='Early stopping patience (default: 5)')
+     # Auxiliary arguments
+     parser.add_argument('--track', type=str, default='DF',choices=['LA', 'PA','DF'], help='LA/PA/DF')
+     parser.add_argument('--eval_output', type=str, default=None,
+@@ -239,7 +261,6 @@ if __name__ == '__main__':
+     nb_params = sum([param.view(-1).size()[0] for param in model.parameters()])
+     model =nn.DataParallel(model).to(device)
+     print('nb_params:',nb_params)
+-
+     #set Adam optimizer
+     optimizer = torch.optim.Adam(model.parameters(), lr=args.lr,weight_decay=args.weight_decay)
+     
+@@ -250,9 +271,9 @@ if __name__ == '__main__':
+ 
+     #evaluation 
+     if args.eval:
+-        file_eval = genSpoof_list( dir_meta =  os.path.join(args.protocols_path+'ASVspoof_{}_cm_protocols/{}.cm.eval.trl.txt'.format(track,prefix_2021)),is_train=False,is_eval=True)
++        file_eval = genSpoof_list( dir_meta = os.path.join(args.protocols_path),is_train=False,is_eval=True)
+         print('no. of eval trials',len(file_eval))
+-        eval_set=Dataset_ASVspoof2021_eval(list_IDs = file_eval,base_dir = os.path.join(args.database_path+'ASVspoof2021_{}_eval/'.format(args.track)))
++        eval_set=Dataset_ASVspoof2021_eval(list_IDs = file_eval,base_dir = os.path.join(args.database_path))
+         produce_evaluation_file(eval_set, model, device, args.eval_output)
+         sys.exit(0)
+    
+@@ -260,11 +281,11 @@ if __name__ == '__main__':
+ 
+      
+     # define train dataloader
+-    d_label_trn,file_train = genSpoof_list( dir_meta =  os.path.join(args.protocols_path+'ASVspoof_LA_cm_protocols/ASVspoof2019.LA.cm.train.trn.txt'),is_train=True,is_eval=False)
+-    
++    d_label_trn,file_train = genSpoof_list( dir_meta =  os.path.join(args.protocols_path),is_train=True,is_eval=False)
++  
+     print('no. of training trials',len(file_train))
+     
+-    train_set=Dataset_ASVspoof2019_train(args,list_IDs = file_train,labels = d_label_trn,base_dir = os.path.join(args.database_path+'ASVspoof2019_LA_train/'),algo=args.algo)
++    train_set=Dataset_ASVspoof2019_train(args, list_IDs = file_train,labels = d_label_trn,base_dir = os.path.join(args.database_path),algo=args.algo)
+     
+     train_loader = DataLoader(train_set, batch_size=args.batch_size,num_workers=8, shuffle=True,drop_last = True)
+     
+@@ -273,11 +294,11 @@ if __name__ == '__main__':
+ 
+     # define dev (validation) dataloader
+ 
+-    d_label_dev,file_dev = genSpoof_list( dir_meta =  os.path.join(args.protocols_path+'ASVspoof_LA_cm_protocols/ASVspoof2019.LA.cm.dev.trl.txt'),is_train=False,is_eval=False)
++    d_label_dev,file_dev = genSpoof_list( dir_meta =  os.path.join(args.protocols_path),is_train=False,is_eval=False)
+     
+     print('no. of validation trials',len(file_dev))
+     
+-    dev_set = Dataset_ASVspoof2019_train(args,list_IDs = file_dev,labels = d_label_dev,base_dir = os.path.join(args.database_path+'ASVspoof2019_LA_dev/'),algo=args.algo)
++    dev_set = Dataset_ASVspoof2019_train(args,list_IDs = file_dev,labels = d_label_dev,base_dir = os.path.join(args.database_path),algo=args.algo)
+ 
+     dev_loader = DataLoader(dev_set, batch_size=args.batch_size,num_workers=8, shuffle=False)
+ 
+@@ -290,13 +311,36 @@ if __name__ == '__main__':
+     num_epochs = args.num_epochs
+     writer = SummaryWriter('logs/{}'.format(model_tag))
+     
+-    for epoch in range(num_epochs):
++    # Early stopping variables
++    best_val_loss = float('inf')
++    patience_counter = 0
++    patience = args.early_stop_patience
++    
++    for epoch in tqdm.tqdm(range(num_epochs), desc="Epochs"):
+         
+         running_loss = train_epoch(train_loader,model, args.lr,optimizer, device)
+         val_loss = evaluate_accuracy(dev_loader, model, device)
+         writer.add_scalar('val_loss', val_loss, epoch)
+         writer.add_scalar('loss', running_loss, epoch)
+-        print('\n{} - {} - {} '.format(epoch,
+-                                                   running_loss,val_loss))
+-        torch.save(model.state_dict(), os.path.join(
+-            model_save_path, 'epoch_{}.pth'.format(epoch)))
++        print('\n{} - {} - {} '.format(epoch, running_loss,val_loss))
++        
++        # Early stopping check
++        if val_loss < best_val_loss:
++            best_val_loss = val_loss
++            patience_counter = 0
++            # Save best model
++            torch.save(model.state_dict(), os.path.join(
++                model_save_path, args.model_name))
++            print('New best validation loss: {:.6f} - Model saved!'.format(best_val_loss))
++        else:
++            patience_counter += 1
++            print('No improvement. Patience: {}/{}'.format(patience_counter, patience))
++        
++        # Save epoch model (optional)
++        # torch.save(model.state_dict(), os.path.join(model_save_path, 'epoch_{}.pth'.format(epoch)))
++        
++        # Early stopping
++        if patience_counter >= patience:
++            print('Early stopping triggered after {} epochs without improvement'.format(patience))
++            print('Best validation loss: {:.6f}'.format(best_val_loss))
++            break
+diff --git a/model.py b/model.py
+index 0eb574a..842f636 100644
+--- a/model.py
++++ b/model.py
+@@ -21,7 +21,7 @@ class SSLModel(nn.Module):
+     def __init__(self,device):
+         super(SSLModel, self).__init__()
+         
+-        cp_path = 'xlsr2_300m.pt'   # Change the pre-trained XLSR model path. 
++        cp_path = '${PROJECT_ROOT}/xlsr2_300m.pt'   # Change the pre-trained XLSR model path. 
+         model, cfg, task = fairseq.checkpoint_utils.load_model_ensemble_and_task([cp_path])
+         self.model = model[0]
+         self.device=device

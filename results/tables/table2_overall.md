@@ -1,0 +1,12 @@
+# Table 2 -- overall EER (%)
+`baseline` and `finetune` are recomputed from raw scores; `dna_multi_lora` is
+quoted from the paper (score files not included in this snapshot).
+
+| model        | method         | params_M   |   asv19 |   df21 |   itw |   pooled |
+|:-------------|:---------------|:-----------|--------:|-------:|------:|---------:|
+| AASIST-SSL   | baseline       |            |   15.47 |  21.37 | 10.46 |    21.39 |
+| AASIST-SSL   | finetune       | 317.8      |    5.03 |  11.35 |  8.05 |     8.13 |
+| AASIST-SSL   | dna_multi_lora | 26.7       |    4.65 |  10.85 |  8.88 |     7.93 |
+| ConformerTCM | baseline       |            |   14.74 |  19.44 |  7.86 |    20.23 |
+| ConformerTCM | finetune       | 319.8      |    5.23 |  11.08 |  8.14 |     8.14 |
+| ConformerTCM | dna_multi_lora | 27.2       |    4.37 |  10.30 |  8.13 |     7.55 |
