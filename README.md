@@ -22,20 +22,7 @@ parameters of full fine-tuning.
 
 ## How it works
 
-```
-                     ┌──────────────────────┐
-  input audio  ──▶   │ Noise Classification │ ──▶ noise type
-                     │  Spec + MFCC + F0    │         │
-                     │   CNN-BiLSTM, 7.2M   │         ▼
-                     └──────────────────────┘   ┌──────────┐
-                                                │  Router  │
-                                                └────┬─────┘
-                                                     │ selects LoRA_i
-                     ┌───────────────────────────────▼──────┐
-                     │   frozen SSL backbone (XLSR)         │
-                     │   + LoRA_i (rank 8)  →  backend      │ ──▶ real / fake
-                     └──────────────────────────────────────┘
-```
+<img width="1490" height="325" alt="framework" src="https://github.com/user-attachments/assets/26f65f40-8294-471d-9cae-6feacc8f9d93" />
 
 1. **Classify** — the input is cut into 4 s windows and turned into three views:
    spectrogram (environmental noise), MFCC (timbre/formants), and F0 (pitch
@@ -148,7 +135,8 @@ regenerates them from a local copy of the scores.
 @inproceedings{lee2026dynamic,
   title={Dynamic Noise-Aware Multi Lora Framework Towards Real-World Audio Deepfake Detection},
   author={Lee, Woongjae and Dinh-Xuan, Hung and Doan, Thien-Phuc and Jung, Souhwan},
-  booktitle={ICASSP 2026-2026 IEEE International Conference on Acoustics, Speech and Signal Processing (ICASSP)},
+  booktitle={ICASSP 2026-2026 I<img width="1490" height="325" alt="framework" src="https://github.com/user-attachments/assets/da88e1bf-3692-47e3-9767-493e0e16d48d" />
+EEE International Conference on Acoustics, Speech and Signal Processing (ICASSP)},
   pages={16257--16261},
   year={2026},
   organization={IEEE}
