@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 class PitchAugmentor(BaseAugmentor):
     """
     Pitch augmentation
-    Generates versions of audio pitch-shifted from -5 to +5 semitones
+    Generates versions of audio pitch-shifted by +-2 to +-5 semitones
     """
     def __init__(self, config: dict):
         """
@@ -22,9 +22,9 @@ class PitchAugmentor(BaseAugmentor):
         :param config: dict, configuration dictionary
         """
         super().__init__(config)
-        # Define the range of semitones (-5 to +5)
-        self.min_semitones = config["min_semitones"]
-        self.max_semitones = config["max_semitones"]
+        # ICASSP 2026 Table 1: shift by +-2 to +-5 semitones (|n_steps| in [2, 5], random sign)
+        self.min_abs_semitones = config.get("min_abs_semitones", 2)
+        self.max_abs_semitones = config.get("max_abs_semitones", 5)
         
         # self.pitch_augmentor = PitchShift(
         #     min_semitones=self.min_semitones,
@@ -37,13 +37,11 @@ class PitchAugmentor(BaseAugmentor):
         """
         Transform the audio by pitch shifting
         
-        :param n_steps: Optional specific semitone shift to apply (-5 to +5)
-                       If None, applies a random shift in the range
+        Applies a random shift with |n_steps| in [min_abs_semitones, max_abs_semitones]
         :return: The pitch-shifted audio segment
         """
-        n_steps = np.random.uniform(self.min_semitones, self.max_semitones)
-        while n_steps == 0:
-            n_steps = np.random.randint(self.min_semitones, self.max_semitones + 1)
+        n_steps = np.random.uniform(self.min_abs_semitones, self.max_abs_semitones)
+        n_steps *= np.random.choice([-1, 1])
         # librosa로 적용
         augmented_data = librosa.effects.pitch_shift(y = self.data, sr = self.sr, n_steps=n_steps)
         # Transform to pydub audio segment

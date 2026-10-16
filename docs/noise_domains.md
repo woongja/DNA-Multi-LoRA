@@ -12,10 +12,10 @@ the **nine classes** the noise classification module predicts.
 | D1 | Background noise | environmental/natural sounds from [ESC-50](https://github.com/karolpiczak/ESC-50), SNR −6 to 3 dB |
 | D1 | Background music | [MUSAN](https://www.openslr.org/17/), SNR 10–20 dB |
 | D2 | Auto-tune | pitch corrected to the nearest note of a predefined scale ([python-auto-tune](https://github.com/JanWilczek/python-auto-tune)) |
-| D3 | Band-pass filter | band-pass (poles = 1) via torchaudio/sox, simulating band-limited speech |
+| D3 | Band-pass filter | band-pass (poles = 1, 300–3400 Hz) via torchaudio, simulating band-limited speech |
 | D4 | Echo | delay and decay sampled at random from predefined ranges |
 | D5 | Pitch shift | ±2 to ±5 semitones, `librosa.effects.pitch_shift()` |
-| D5 | Time stretch | rate 0.6 and 1.4, `librosa.effects.time_stretch()` (speed change without pitch change) |
+| D5 | Time stretch | rate sampled uniformly in [0.6, 1.4], `librosa.effects.time_stretch()` (speed change without pitch change) |
 | D6 | Gaussian noise | zero-mean, standard deviation sampled in 0.01–0.2 |
 | D7 | Reverberation | [RIR](https://www.openslr.org/28/) impulse responses convolved via `fftconvolve` |
 
@@ -44,9 +44,9 @@ distinct enough to classify apart but are handled by one adapter. D5 is a single
 because pitch shift and time stretch are both speech manipulations that the F0 branch
 picks up the same way.
 
-Older augmentation runs emitted `high_pass_filter` and `low_pass_filter` separately;
-both map to `band_pass_filter`. `noise_classification/compute_accuracy.py` applies this
-mapping when scoring predictions.
+The augmentation pipeline emits `band_pass_filter` directly. Older runs emitted
+`high_pass_filter` and `low_pass_filter` separately; `noise_classification/compute_accuracy.py`
+still maps both to `band_pass_filter` so legacy prediction files score correctly.
 
 ## Corpora
 

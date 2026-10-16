@@ -13,8 +13,7 @@ from augmentation import (
     BackgroundNoiseAugmentorDeepen as BackgroundNoiseAugmentor,
     BackgroundMusicAugmentorDeepen as BackgroundMusicAugmentor,
     GaussianAugmentorV1,
-    HighPassFilterAugmentor,
-    LowPassFilterAugmentor,
+    BandpassAugmentor,
     PitchAugmentor,
     TimeStretchAugmentor,
     EchoAugmentorDeepen as EchoAugmentor,
@@ -25,14 +24,12 @@ AUGMENTATION_CLASSES = {
     "background_noise": BackgroundNoiseAugmentor,
     "background_music": BackgroundMusicAugmentor,
     "gaussian_noise": GaussianAugmentorV1,
-    "high_pass_filter": LowPassFilterAugmentor.__class__,  # placeholder (아래에서 덮어씀)
-    "low_pass_filter": LowPassFilterAugmentor,
+    "band_pass_filter": BandpassAugmentor,
     "pitch_shift": PitchAugmentor,
     "time_stretch": TimeStretchAugmentor,
     "echo": EchoAugmentor,
     "reverberation": ReverbAugmentor,
 }
-AUGMENTATION_CLASSES["high_pass_filter"] = HighPassFilterAugmentor  # 명시 덮어쓰기
 AUG_LIST_ALL = list(AUGMENTATION_CLASSES.keys())
 
 SPLIT_PAT = re.compile(r"ASVspoof2019_LA_(train|dev|eval)", re.IGNORECASE)

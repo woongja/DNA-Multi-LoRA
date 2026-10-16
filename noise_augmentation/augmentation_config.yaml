@@ -1,62 +1,49 @@
-background_noise:
-  aug_type: background_noise
-  noise_path: "${HOME}/noise-tracing/Datasets/musan/noise"
+# Augmentation settings for the ICASSP 2026 noise domains (Table 1, docs/noise_domains.md).
 
-background_music:
+background_noise:            # D1 — environmental/natural sounds
+  aug_type: background_noise
+  noise_path: "${HOME}/noise-tracing/Datasets/ESC-50/audio"
+  min_SNR_dB: -6
+  max_SNR_dB: 3
+
+background_music:            # D1
   aug_type: background_music
   music_path: "${HOME}/noise-tracing/Datasets/musan/music"
+  min_SNR_dB: 10
+  max_SNR_dB: 20
 
-gaussian_noise:
-  aug_type: gaussian_noise
-  min_std_dev: 0.01
-  max_std_dev: 0.2
-  mean: 0.0
-
-high_pass_filter:
-  aug_type: high_pass_filter
-  min_cutoff_freq: 2000
-  max_cutoff_freq: 4000
-
-low_pass_filter:
-  aug_type: low_pass_filter
-  min_cutoff_freq: 300
-  max_cutoff_freq: 1500
-
-freq_minus:
-  aug_type: freq_minus
-  num_operations: 5
-  max_freq: 4300
-  min_energy: 0.01
-  max_energy: 0.3
-
-freq_plus:
-  aug_type: freq_plus
-  num_operations: 5
-  max_freq: 4300
-  min_energy: 0.01
-  max_energy: 0.3
-
-pitch_shift:
-  aug_type: pitch_shift
-  min_semitones: -5
-  max_semitones: 5
-
-time_stretch:
-  aug_type: time_stretch
-  min_factor: 0.6
-  max_factor: 1.4
-
-auto_tune:
+auto_tune:                   # D2 — run via generate_audio_autotune.py
   aug_type: auto_tune
   correction_method: closest
 
-echo:
+band_pass_filter:            # D3 — band-limited speech, poles = 1
+  aug_type: band_pass_filter
+  highpass: 300
+  lowpass: 3400
+
+echo:                        # D4
   aug_type: echo
   min_delay: 0.05
   max_delay: 1.5
   min_decay: 0.2
   max_decay: 1.0
 
-reverberation:
+pitch_shift:                 # D5 — |shift| in [2, 5] semitones, random sign
+  aug_type: pitch_shift
+  min_abs_semitones: 2
+  max_abs_semitones: 5
+
+time_stretch:                # D5 — speed change without pitch change
+  aug_type: time_stretch
+  min_factor: 0.6
+  max_factor: 1.4
+
+gaussian_noise:              # D6
+  aug_type: gaussian_noise
+  min_std_dev: 0.01
+  max_std_dev: 0.2
+  mean: 0.0
+
+reverberation:               # D7
   aug_type: reverberation
   rir_path: "${HOME}/noise-tracing/Datasets/RIRS_NOISES"

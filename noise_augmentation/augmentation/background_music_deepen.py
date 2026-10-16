@@ -33,6 +33,9 @@ class BackgroundMusicAugmentor(BaseAugmentor):
         """
         super().__init__(config)
         self.music_path = config["music_path"]
+        # ICASSP 2026 Table 1: MUSAN music at SNR 10 to 20 dB
+        self.min_snr_db = config.get("min_SNR_dB", 10)
+        self.max_snr_db = config.get("max_SNR_dB", 20)
         #print(f"Initializing BackgroundMusicAugmentor with music path: {self.music_path}")
         
         # Use cached music list if available, otherwise compute and cache it
@@ -116,9 +119,7 @@ class BackgroundMusicAugmentor(BaseAugmentor):
             noise_data = np.tile(noise_data, repeats)
         noise_data = noise_data[:audio_length]
 
-        # 🔥 변경된 부분: 랜덤 SNR (-5 ~ +5 dB 혹은 5~15 dB)
-        # snr_db = np.random.uniform(-5, 5)  # 배경 노이즈는 (-5 ~ +5)
-        snr_db = np.random.uniform(5, 20) # 배경 음악은 (5 ~ 15)
+        snr_db = np.random.uniform(self.min_snr_db, self.max_snr_db)
 
         # 원본 신호 파워 계산
         audio_power = np.mean(self.data ** 2)
@@ -128,6 +129,7 @@ class BackgroundMusicAugmentor(BaseAugmentor):
 
         augmented_data = self.data + noise_data * scaling_factor
         self.augmented_audio = librosa_to_pydub(augmented_data, sr=self.sr)
+        self.snr_db = round(float(snr_db), 2)
         self.ratio = f"snr: {snr_db:.2f} dB"
 
     @classmethod

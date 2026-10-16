@@ -31,7 +31,13 @@ def pydub_to_librosa(audio_segment: AudioSegment) -> np.ndarray:
 
 def librosa_to_pydub(audio_data: np.ndarray, sr: int =16000) -> AudioSegment:
     """Convert librosa audio data to pydub audio segment"""
-    audio_data = np.array(audio_data * (1<<15), dtype=np.int16)
+    # loud mixtures (e.g. SNR -6 dB) can exceed full scale and would wrap around in the int16 cast;
+    # rescale the whole signal instead of clipping so the mixing SNR is preserved
+    audio_data = np.asarray(audio_data, dtype=np.float64)
+    peak = np.max(np.abs(audio_data)) if audio_data.size else 0.0
+    if peak > 1.0:
+        audio_data = audio_data / peak * 0.99
+    audio_data = (audio_data * (1<<15)).astype(np.int16)
     return AudioSegment(audio_data.tobytes(), 
                     frame_rate=sr,
                     sample_width=audio_data.dtype.itemsize, 

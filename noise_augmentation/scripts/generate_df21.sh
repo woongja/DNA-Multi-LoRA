@@ -56,7 +56,7 @@ subset = "eval"
 # 증강 목록(오토튠/클린 포함)
 AUGS = [
     "background_noise","background_music","gaussian_noise",
-    "high_pass_filter","low_pass_filter","pitch_shift",
+    "band_pass_filter","pitch_shift",
     "time_stretch","echo","reverberation",
     "clean","auto_tune",
 ]
@@ -113,7 +113,7 @@ find "$ASSIGN_DIR" -type f -name "*.txt" | sed 's/^/ - /'
 run_general_noise() {
   echo "$(ts) [STEP 1] DF21 일반 증강 시작"
 
-  local AUGS=(background_noise background_music gaussian_noise high_pass_filter low_pass_filter pitch_shift time_stretch echo reverberation)
+  local AUGS=(background_noise background_music gaussian_noise band_pass_filter pitch_shift time_stretch echo reverberation)
 
   local SUB_DIR="${ASSIGN_DIR}/eval"
   [[ -d "$SUB_DIR" ]] || { echo "[INFO] skip eval (no shards)"; return 0; }

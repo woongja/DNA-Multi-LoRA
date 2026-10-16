@@ -33,6 +33,9 @@ class BackgroundNoiseAugmentor(BaseAugmentor):
         """
         super().__init__(config)
         self.noise_path = config["noise_path"]
+        # ICASSP 2026 Table 1: ESC-50 environmental sounds at SNR -6 to 3 dB
+        self.min_snr_db = config.get("min_SNR_dB", -6)
+        self.max_snr_db = config.get("max_SNR_dB", 3)
         #print(f"Initializing BackgroundNoiseAugmentor with noise path: {self.noise_path}")
         
         # Use cached noise list if available, otherwise compute and cache it
@@ -117,9 +120,7 @@ class BackgroundNoiseAugmentor(BaseAugmentor):
             noise_data = np.tile(noise_data, repeats)
         noise_data = noise_data[:audio_length]
 
-        # 🔥 변경된 부분: 랜덤 SNR (-5 ~ +5 dB 혹은 5~15 dB)
-        snr_db = np.random.uniform(-5, 20)  # 배경 노이즈는 (-5 ~ +5)
-        # snr_db = np.random.uniform(5, 15) # 배경 음악은 (5 ~ 15)
+        snr_db = np.random.uniform(self.min_snr_db, self.max_snr_db)
 
         # 원본 신호 파워 계산
         audio_power = np.mean(self.data ** 2)
@@ -129,6 +130,7 @@ class BackgroundNoiseAugmentor(BaseAugmentor):
 
         augmented_data = self.data + noise_data * scaling_factor
         self.augmented_audio = librosa_to_pydub(augmented_data, sr=self.sr)
+        self.snr_db = round(float(snr_db), 2)
         self.ratio = f"snr: {snr_db:.2f} dB"
     @classmethod
     def clear_cache(cls):

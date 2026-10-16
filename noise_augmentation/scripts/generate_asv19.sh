@@ -65,7 +65,7 @@ run_general_noise() {
   echo "$(ts) [STEP 1] 일반 증강 시작"
 
   local SUBSETS=(train dev eval)
-  local AUGS=(background_noise background_music gaussian_noise high_pass_filter low_pass_filter pitch_shift time_stretch echo reverberation)
+  local AUGS=(background_noise background_music gaussian_noise band_pass_filter pitch_shift time_stretch echo reverberation)
 
   for SUB in "${SUBSETS[@]}"; do
     local SUB_DIR="${ASSIGN_DIR}/${SUB}"

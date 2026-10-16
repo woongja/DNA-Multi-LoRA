@@ -67,4 +67,5 @@ class BandpassAugmentor(BaseAugmentor):
         aug_audio = apply_effect(torch_audio.T, self.sr, self.effects)
         # convert to numpy array
         aug_audio = aug_audio.numpy().flatten()
-        self.augmented_audio = librosa_to_pydub(aug_audio)
+        self.augmented_audio = librosa_to_pydub(aug_audio, sr=self.sr)
+        self.ratio = f"bandpass: {self.bandpass['highpass']}-{self.bandpass['lowpass']} Hz"
